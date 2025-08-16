@@ -1,0 +1,134 @@
+import { spawn, ChildProcess } from 'child_process';
+import autocannon from 'autocannon';
+import pidusage from 'pidusage';
+import fs from 'fs';
+import path from 'path';
+import {
+  BenchmarkResult,
+  FrameworkResult,
+  RequestStats,
+  LatencyStats,
+  SystemStats,
+  TimeSeries
+} from './types';
+
+interface Target {
+  name: string;
+  command: string[];
+  port: number;
+  folder: string;
+}
+
+const targets: Target[] = [
+  { name: 'nestjs', command: ['node', 'dist/main.js'], port: 3000, folder: '../frameworks-impl/minimal/nestjs' },
+  { name: 'fastify', command: ['node', 'dist/server.js'], port: 3001, folder: '../frameworks-impl/minimal/fastify' },
+];
+
+async function monitorProcess(proc: ChildProcess, duration: number): Promise<SystemStats> {
+  if (!proc.pid) throw new Error('Process PID is undefined');
+
+  const cpuSeries: TimeSeries = [];
+  const memorySeries: TimeSeries = [];
+
+  return new Promise((resolve) => {
+    const interval = setInterval(async () => {
+      try {
+        const usage = await pidusage(proc.pid!);
+        const timestamp = new Date().toISOString();
+        cpuSeries.push({ timestampt: timestamp, value: usage.cpu });
+        memorySeries.push({ timestampt: timestamp, value: usage.memory });
+      } catch {}
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(interval);
+
+      const cpuValues = cpuSeries.map(c => c.value);
+      const memValues = memorySeries.map(m => m.value);
+
+      const getStats = (arr: number[]) => ({
+        lowest: Math.min(...arr),
+        median: arr.sort((a, b) => a - b)[Math.floor(arr.length / 2)],
+        average: arr.reduce((a, b) => a + b, 0) / arr.length,
+        highest: Math.max(...arr)
+      });
+
+      const cpuStats = getStats(cpuValues);
+      const memoryStats = getStats(memValues);
+
+      resolve({
+        lowestcpu: cpuStats.lowest,
+        mediancpu: cpuStats.median,
+        averagecpu: cpuStats.average,
+        highestcpu: cpuStats.highest,
+        cpu: cpuSeries,
+        lowestmemory: memoryStats.lowest,
+        medianmemory: memoryStats.median,
+        averagememory: memoryStats.average,
+        highestmemory: memoryStats.highest,
+        memory: memorySeries
+      });
+    }, duration);
+  });
+}
+
+function extractLatencyStats(result: any): LatencyStats {
+  return {
+    min: result.latency.min,
+    max: result.latency.max,
+    mean: result.latency.mean,
+    stddev: result.latency.stddev,
+    p50: result.latency.p50,
+    p75: result.latency.p75,
+    p90: result.latency.p90,
+    p99: result.latency.p99,
+  };
+}
+
+function extractRequestStats(result: any): RequestStats {
+  return {
+    total: result.requests.total,
+    successful: result.requests.total - result.requests.errors,
+    failed: result.requests.errors,
+    rps: result.requests.average,
+    latency: extractLatencyStats(result),
+  };
+}
+
+async function runBenchmark() {
+  const benchmarkResults: BenchmarkResult = { framework: [] };
+
+  for (const t of targets) {
+    console.log(`\nStarting ${t.folder} server...`);
+
+    const proc = spawn(t.command[0], t.command.slice(1), { cwd: t.folder, stdio: 'inherit' });
+    await new Promise((res) => setTimeout(res, 2000));
+
+    console.log(`Benchmarking ${t.folder}...`);
+    const durationMs = 10000;
+
+    const [benchResult, systemStats] = await Promise.all([
+      autocannon({ url: `http://localhost:${t.port}`, connections: 50, duration: durationMs / 1000 }),
+      monitorProcess(proc, durationMs)
+    ]);
+
+    const frameworkResult: FrameworkResult = {
+      name: t.name,
+      result: {
+        requests: extractRequestStats(benchResult),
+        system: systemStats
+      }
+    };
+
+    benchmarkResults.framework.push(frameworkResult);
+    proc.kill();
+  }
+
+  const outputDir = path.resolve('./output');
+  fs.mkdirSync(outputDir, { recursive: true });
+
+  fs.writeFileSync(path.join(outputDir, 'results.json'), JSON.stringify(benchmarkResults, null, 2));
+  console.log('\nBenchmark finished. Results saved to results.json');
+}
+
+runBenchmark();
