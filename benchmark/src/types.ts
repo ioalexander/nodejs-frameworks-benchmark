@@ -46,5 +46,3 @@ export type FrameworkResult = {
 export type BenchmarkResult = {
   framework: FrameworkResult[];
 };
-
-

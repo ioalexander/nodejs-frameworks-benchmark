@@ -1,0 +1,41 @@
+.downloadBlock {
+  width: 100%;
+  margin-bottom: 100px;
+}
+
+.downloadBlock > .title {
+  width: 100%;
+  text-align: center;
+  font-size: 60px;
+  margin-bottom: 60px;
+}
+
+.downloadBlock > .row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.downloadBlock > .row > .download {
+  padding: 0 60px;
+  height: 60px;
+  background: var(--primary-color);
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--white);
+}
+
+.downloadBlock > .row > .github {
+  padding: 0 60px;
+  height: 60px;
+  background: #2b3137;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--white);
+}

@@ -1,0 +1,36 @@
+.container {
+  width: 100%;
+  margin-top: 60px;
+}
+
+.childrenContainer {
+  margin: 0 auto;
+  width: calc(100% - 40px);
+  max-width: 1400px;
+  min-height: 100vh;
+}
+
+.header {
+  width: 100%;
+  text-align: center;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: fixed;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  background: var(--white);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+}
+
+.header > .title {
+  font-size: 20px;
+  text-align: center;
+}
+
+.footer {
+  text-align: center;
+  padding: 30px 0;
+}

@@ -1,16 +1,16 @@
-import { spawn, ChildProcess } from 'child_process';
-import autocannon from 'autocannon';
-import pidusage from 'pidusage';
-import fs from 'fs';
-import path from 'path';
+import { spawn, ChildProcess } from "child_process";
+import autocannon from "autocannon";
+import pidusage from "pidusage";
+import fs from "fs";
+import path from "path";
 import {
   BenchmarkResult,
   FrameworkResult,
   RequestStats,
   LatencyStats,
   SystemStats,
-  TimeSeries
-} from './types';
+  TimeSeries,
+} from "./types";
 
 interface Target {
   name: string;
@@ -20,38 +20,67 @@ interface Target {
 }
 
 const targets: Target[] = [
-  { name: 'nestjs', command: ['node', 'dist/main.js'], port: 3000, folder: '../frameworks-impl/minimal/nestjs' },
-  { name: 'fastify', command: ['node', 'dist/server.js'], port: 3001, folder: '../frameworks-impl/minimal/fastify' },
+  {
+    name: "nestjs",
+    command: ["node", "dist/main.js"],
+    port: 3000,
+    folder: "../frameworks-impl/minimal/nestjs",
+  },
+  {
+    name: "fastify",
+    command: ["node", "dist/server.js"],
+    port: 3001,
+    folder: "../frameworks-impl/minimal/fastify",
+  },
 ];
 
-async function monitorProcess(proc: ChildProcess, duration: number): Promise<SystemStats> {
-  if (!proc.pid) throw new Error('Process PID is undefined');
+async function monitorProcess(
+  proc: ChildProcess,
+  duration: number,
+): Promise<SystemStats> {
+  if (!proc.pid) throw new Error("Process PID is undefined");
 
   const cpuSeries: TimeSeries = [];
   const memorySeries: TimeSeries = [];
 
   return new Promise((resolve) => {
-    const interval = setInterval(async () => {
+    let stopped = false;
+
+    const poll = async () => {
+      if (stopped) return;
+
       try {
         const usage = await pidusage(proc.pid!);
         const timestamp = new Date().toISOString();
         cpuSeries.push({ timestampt: timestamp, value: usage.cpu });
-        memorySeries.push({ timestampt: timestamp, value: usage.memory });
-      } catch {}
-    }, 100);
+        memorySeries.push({
+          timestampt: timestamp,
+          value: usage.memory,
+        });
+      } catch (err) {
+        console.error("Failed to get PID usage:", err);
+      }
+
+      setTimeout(poll, 100);
+    };
+
+    poll();
 
     setTimeout(() => {
-      clearInterval(interval);
+      stopped = true;
 
-      const cpuValues = cpuSeries.map(c => c.value);
-      const memValues = memorySeries.map(m => m.value);
+      const cpuValues = cpuSeries.map((c) => c.value);
+      const memValues = memorySeries.map((m) => m.value);
 
-      const getStats = (arr: number[]) => ({
-        lowest: Math.min(...arr),
-        median: arr.sort((a, b) => a - b)[Math.floor(arr.length / 2)],
-        average: arr.reduce((a, b) => a + b, 0) / arr.length,
-        highest: Math.max(...arr)
-      });
+      const getStats = (arr: number[]) => {
+        const sorted = [...arr].sort((a, b) => a - b);
+        return {
+          lowest: Math.min(...arr),
+          median: sorted[Math.floor(sorted.length / 2)],
+          average: arr.reduce((a, b) => a + b, 0) / arr.length,
+          highest: Math.max(...arr),
+        };
+      };
 
       const cpuStats = getStats(cpuValues);
       const memoryStats = getStats(memValues);
@@ -66,7 +95,7 @@ async function monitorProcess(proc: ChildProcess, duration: number): Promise<Sys
         medianmemory: memoryStats.median,
         averagememory: memoryStats.average,
         highestmemory: memoryStats.highest,
-        memory: memorySeries
+        memory: memorySeries,
       });
     }, duration);
   });
@@ -86,10 +115,13 @@ function extractLatencyStats(result: any): LatencyStats {
 }
 
 function extractRequestStats(result: any): RequestStats {
+  const total = result.requests.total ?? 0;
+  const errors = result.requests.errors ?? 0;
+
   return {
     total: result.requests.total,
-    successful: result.requests.total - result.requests.errors,
-    failed: result.requests.errors,
+    successful: total - errors,
+    failed: errors,
     rps: result.requests.average,
     latency: extractLatencyStats(result),
   };
@@ -101,34 +133,52 @@ async function runBenchmark() {
   for (const t of targets) {
     console.log(`\nStarting ${t.folder} server...`);
 
-    const proc = spawn(t.command[0], t.command.slice(1), { cwd: t.folder, stdio: 'inherit' });
+    const proc = spawn(t.command[0], t.command.slice(1), {
+      cwd: t.folder,
+      stdio: "inherit",
+    });
     await new Promise((res) => setTimeout(res, 2000));
 
     console.log(`Benchmarking ${t.folder}...`);
-    const durationMs = 10000;
+    const durationMs = 30000;
 
     const [benchResult, systemStats] = await Promise.all([
-      autocannon({ url: `http://localhost:${t.port}`, connections: 50, duration: durationMs / 1000 }),
-      monitorProcess(proc, durationMs)
+      autocannon({
+        url: `http://localhost:${t.port}`,
+        connections: 100,
+        duration: durationMs / 1000,
+      }),
+      monitorProcess(proc, durationMs),
     ]);
 
     const frameworkResult: FrameworkResult = {
       name: t.name,
       result: {
         requests: extractRequestStats(benchResult),
-        system: systemStats
-      }
+        system: systemStats,
+      },
     };
 
     benchmarkResults.framework.push(frameworkResult);
     proc.kill();
   }
 
-  const outputDir = path.resolve('./output');
+  const outputDir = path.resolve("./output");
   fs.mkdirSync(outputDir, { recursive: true });
 
-  fs.writeFileSync(path.join(outputDir, 'results.json'), JSON.stringify(benchmarkResults, null, 2));
-  console.log('\nBenchmark finished. Results saved to results.json');
+  const frontendOutputDir = path.resolve("../frontend/output");
+  fs.mkdirSync(frontendOutputDir, { recursive: true });
+
+  fs.writeFileSync(
+    path.join(outputDir, "results.json"),
+    JSON.stringify(benchmarkResults, null, 2),
+  );
+  fs.writeFileSync(
+    path.join(frontendOutputDir, "results.json"),
+    JSON.stringify(benchmarkResults, null, 2),
+  );
+
+  console.log("\nBenchmark finished. Results saved to results.json");
 }
 
 runBenchmark();

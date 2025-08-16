@@ -1,0 +1,28 @@
+:root {
+  --primary-color: #81bd03;
+  --white: #fafafa;
+  --black: #0f0f0f;
+  --background-color: var(--white);
+  --font-size: 16px;
+}
+
+html,
+body {
+  overflow-x: hidden;
+  font-family: "Poppins", Roboto, Helvatica, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: var(--background-color);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-size: 18px;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
