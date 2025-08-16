@@ -18,6 +18,11 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install global CLI tools
+        run: |
+          yarn global add @nestjs/cli
+          yarn global add next
+
       - name: Install dependencies
         run: yarn install
 
