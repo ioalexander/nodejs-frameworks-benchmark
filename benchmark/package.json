@@ -8,7 +8,7 @@
     "install:minimal:fastify": "cd ../frameworks-impl/minimal/fastify && yarn install --frozen-lockfile",
     "build:minimal:nestjs": "cd ../frameworks-impl/minimal/nestjs && yarn build",
     "build:minimal:fastify": "cd ../frameworks-impl/minimal/fastify && tsc",
-    "install:all": "yarn install:minimal:nestjs && yarn intall:minimal:fastify",
+    "install:all": "yarn install:minimal:nestjs && yarn install:minimal:fastify",
     "build:all": "yarn build:minimal:nestjs && yarn build:minimal:fastify",
     "start:benchmark": "ts-node src/benchmark.ts"
   },
