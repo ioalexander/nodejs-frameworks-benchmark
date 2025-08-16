@@ -6,9 +6,7 @@
   "scripts": {
     "build:minimal:nestjs": "cd ../frameworks-impl/minimal/nestjs && yarn build",
     "build:minimal:fastify": "cd ../frameworks-impl/minimal/fastify && tsc",
-    "build:bloaty:nestjs": "cd ../frameworks-impl/minimal/nestjs && yarn build",
-    "build:bloaty:fastify": "cd ../frameworks-impl/minimal/fastify && tsc",
-    "build:all": "yarn build:minimal:nestjs && yarn build:minimal:fastify && yarn build:bloaty:nestjs && yarn build:bloaty:fastify",
+    "build:all": "yarn build:minimal:nestjs && yarn build:minimal:fastify",
     "start:benchmark": "ts-node src/benchmark.ts"
   },
   "dependencies": {
