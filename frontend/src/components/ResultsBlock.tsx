@@ -203,4 +203,4 @@ const ResultsBlock: React.FC = () => {
   );
 };
 
-export default ResutlsBlock;
+export default ResultsBlock;
