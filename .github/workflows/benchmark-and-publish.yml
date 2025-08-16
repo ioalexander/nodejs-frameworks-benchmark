@@ -1,0 +1,46 @@
+name: Benchmark & Deploy Frontend
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  benchmark-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Run benchmarks
+        working-directory: benchmark
+        run: |
+          yarn build:all
+          yarn start:benchmark
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v3
+        with:
+          name: benchmark-results
+          path: |
+            benchmark/output/results.json
+            frontend/output/results.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: yarn build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: frontend/out
