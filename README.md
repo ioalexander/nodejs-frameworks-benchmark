@@ -1,18 +1,39 @@
-# Nodejs frameworks benchmark
+# Node.js Frameworks Benchmark
 
-Here I'm benchmarking different nodejs backend frameworks. I want to measure memory and cpu footprint and their performance.
+This project benchmarks popular Node.js backend frameworks, measuring **CPU usage, memory footprint, and performance**.
 
-Check out results and download them here: https://ioalexander.github.io/nodejs-frameworks-benchmark/
+View results and download data here: [Node.js Frameworks Benchmark](https://ioalexander.github.io/nodejs-frameworks-benchmark/)
 
-## Development
+## Benchmarked Frameworks
 
-```sh
-cd benchmark # go to benchmark folder
-yarn install  # install its dependencies
-yarn intalll:all # install dependencies of all frameworks
-yarn build:all # build all frameworks
-yarn start:benchmark # run benchmark
-cd ../frontend # go to frontend folder
-yarn install # install its dependencies
-yarn dev # serve the page on ::3000
+- Fastify
+- Express
+- NestJS (default Express)
+- NestJS (Fastify adapter)
+
+More frameworks will be added over time.
+
+## Development Setup
+
+```bash
+# Backend
+cd benchmark
+yarn install               # Install benchmark dependencies
+yarn install:all           # Install all frameworks' dependencies
+yarn build:all             # Build all frameworks
+yarn start:benchmark       # Run benchmarks
+
+# Frontend
+cd ../frontend
+yarn install               # Install frontend dependencies
+yarn dev                   # Serve the frontend on http://localhost:3000
 ```
+
+## Contributing
+
+Contributions are welcome!
+
+To add a new framework:
+
+1. Add its implementation in `/frameworks-impl`.
+2. Register the framework in `/benchmark/src/benchmark.ts`.
