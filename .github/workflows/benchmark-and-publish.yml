@@ -70,6 +70,9 @@ jobs:
         run: |
           yarn global add next
 
+      - name: Set basePath environment variable
+        run: echo "BASE_PATH=/$(basename $GITHUB_REPOSITORY)" >> $GITHUB_ENV
+
       - name: Install frontend dependencies
         working-directory: frontend
         run: yarn install
