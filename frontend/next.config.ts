@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const basePath = process.env.BASE_PATH || "";
+const basePath = process.env.BASE_PATH ? `/${process.env.BASE_PATH}` : "";
 const isProd = process.env.NODE_ENV === "production";
 
 const nextConfig: NextConfig = {
