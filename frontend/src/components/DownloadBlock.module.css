@@ -39,3 +39,9 @@
   align-items: center;
   color: var(--white);
 }
+
+@media all and (max-width: 600px) {
+  .downloadBlock > .row {
+    flex-direction: column;
+  }
+}
