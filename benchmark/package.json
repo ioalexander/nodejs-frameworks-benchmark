@@ -6,10 +6,14 @@
   "scripts": {
     "install:minimal:nestjs": "cd ../frameworks-impl/minimal/nestjs && yarn install --frozen-lockfile",
     "install:minimal:fastify": "cd ../frameworks-impl/minimal/fastify && yarn install --frozen-lockfile",
+    "install:minimal:nestjs-fastify-adapter": "cd ../frameworks-impl/minimal/nestjs-fastify-adapter && yarn install --frozen-lockfile",
+    "install:minimal:express": "cd ../frameworks-impl/minimal/express && yarn install --frozen-lockfile",
     "build:minimal:nestjs": "cd ../frameworks-impl/minimal/nestjs && yarn build",
     "build:minimal:fastify": "cd ../frameworks-impl/minimal/fastify && tsc",
-    "install:all": "yarn install:minimal:nestjs && yarn install:minimal:fastify",
-    "build:all": "yarn build:minimal:nestjs && yarn build:minimal:fastify",
+    "build:minimal:nestjs-fastify-adapter": "cd ../frameworks-impl/minimal/nestjs-fastify-adapter && yarn build",
+    "build:minimal:express": "cd ../frameworks-impl/minimal/express && yarn build",
+    "install:all": "yarn install:minimal:nestjs && yarn install:minimal:fastify && yarn install:minimal:nestjs-fastify-adapter && yarn install:minimal:express",
+    "build:all": "yarn build:minimal:nestjs && yarn build:minimal:fastify && yarn build:minimal:nestjs-fastify-adapter && yarn build:minimal:express",
     "start:benchmark": "ts-node src/benchmark.ts"
   },
   "dependencies": {

@@ -1,5 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
-import autocannon from "autocannon";
+import autocannon, { Client } from "autocannon";
 import pidusage from "pidusage";
 import fs from "fs";
 import path from "path";
@@ -32,6 +32,18 @@ const targets: Target[] = [
     port: 3001,
     folder: "../frameworks-impl/minimal/fastify",
   },
+  {
+    name: "nestjs-fastify-adapter",
+    command: ["node", "dist/main.js"],
+    port: 3002,
+    folder: "../frameworks-impl/minimal/nestjs-fastify-adapter",
+  },
+  {
+    name: "express",
+    command: ["node", "dist/server.js"],
+    port: 3004,
+    folder: "../frameworks-impl/minimal/express",
+  },
 ];
 
 async function monitorProcess(
@@ -42,6 +54,7 @@ async function monitorProcess(
 
   const cpuSeries: TimeSeries = [];
   const memorySeries: TimeSeries = [];
+  const startTime = Date.now();
 
   return new Promise((resolve) => {
     let stopped = false;
@@ -51,10 +64,13 @@ async function monitorProcess(
 
       try {
         const usage = await pidusage(proc.pid!);
-        const timestamp = new Date().toISOString();
-        cpuSeries.push({ timestampt: timestamp, value: usage.cpu });
+        const elapsed = Date.now() - startTime; // elapsed ms since start
+        cpuSeries.push({
+          timestampt: new Date(elapsed).toString(),
+          value: usage.cpu,
+        });
         memorySeries.push({
-          timestampt: timestamp,
+          timestampt: new Date(elapsed).toString(),
           value: usage.memory,
         });
       } catch (err) {
@@ -127,6 +143,32 @@ function extractRequestStats(result: any): RequestStats {
   };
 }
 
+function randomPayload() {
+  return JSON.stringify({
+    numbers: Array.from({ length: 50 }, () => Math.floor(Math.random() * 1000)),
+    name: Math.random().toString(36).substring(2, 10),
+    active: Math.random() > 0.5,
+  });
+}
+
+async function runAutocannon(port: number, durationMs: number) {
+  return autocannon({
+    url: `http://localhost:${port}/post-parse-and-return`,
+    connections: 100,
+    duration: durationMs / 1000,
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    requests: Array.from({ length: 100 }, () => ({
+      method: "POST",
+      path: "/post-parse-and-return",
+      body: randomPayload(),
+      headers: { "Content-Type": "application/json" },
+    })),
+  });
+}
+
 async function runBenchmark() {
   const benchmarkResults: BenchmarkResult = { framework: [] };
 
@@ -140,14 +182,10 @@ async function runBenchmark() {
     await new Promise((res) => setTimeout(res, 2000));
 
     console.log(`Benchmarking ${t.folder}...`);
-    const durationMs = 30000;
+    const durationMs = 15000;
 
     const [benchResult, systemStats] = await Promise.all([
-      autocannon({
-        url: `http://localhost:${t.port}`,
-        connections: 100,
-        duration: durationMs / 1000,
-      }),
+      runAutocannon(t.port, durationMs),
       monitorProcess(proc, durationMs),
     ]);
 
