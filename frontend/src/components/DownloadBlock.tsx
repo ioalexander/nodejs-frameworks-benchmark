@@ -29,7 +29,7 @@ const DownloadBlock: FC = () => {
         </a>
         <a
           className={styles.github}
-          href="#"
+          href="https://github.com/ioalexander/nodejs-frameworks-benchmark"
           target="_blank"
           rel="noopener noreferrer"
         >
