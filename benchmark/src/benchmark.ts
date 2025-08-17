@@ -182,7 +182,7 @@ async function runBenchmark() {
     await new Promise((res) => setTimeout(res, 2000));
 
     console.log(`Benchmarking ${t.folder}...`);
-    const durationMs = 15000;
+    const durationMs = 30000;
 
     const [benchResult, systemStats] = await Promise.all([
       runAutocannon(t.port, durationMs),
