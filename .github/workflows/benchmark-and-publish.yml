@@ -20,12 +20,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Set basePath environment variable
-        run: echo "BASE_PATH=nodejs-frameworks-benchmark" >> $GITHUB_ENV
-
-      - name: Echo basePath environment variable
-        run: echo "$BASE_PATH"
-
       - name: Install global CLI tools
         run: |
           yarn global add @nestjs/cli
@@ -88,7 +82,7 @@ jobs:
         run: yarn build
         env:
           NODE_ENV: production
-          BASE_PATH: ${{ env.BASE_PATH }}
+          FRONTEND_BASE_PATH: ${{ vars.FRONTEND_BASE_PATH }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
