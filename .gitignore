@@ -24,3 +24,4 @@ Thumbs.db
 
 # Benchmark results
 benchmark/output/results.json
+frontend/output/results.json
